@@ -1,0 +1,8 @@
+{
+  "loop_count": 3,
+  "generate_batch_size": 10,
+  "filter_thresholds": {
+    "min_length": 200,
+    "min_keywords": 2
+  }
+}

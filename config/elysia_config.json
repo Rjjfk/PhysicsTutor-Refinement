@@ -1,0 +1,8 @@
+{
+  "output_dir": "../model/elysia_lora",
+  "per_device_train_batch_size": 2,
+  "num_train_epochs": 3,  // 少轮次避免覆盖物理能力
+  "learning_rate": 1e-4,  // 小学习率微调风格
+  "logging_steps": 10,
+  "fp16": true
+}
