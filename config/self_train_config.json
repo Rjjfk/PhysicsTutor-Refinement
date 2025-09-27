@@ -1,8 +1,24 @@
 {
-  "loop_count": 3,
-  "generate_batch_size": 10,
+  "loop_count": 2,
+  "generate_batch_size": 20,
+  "generate_strategy": {
+    "temperature": 0.8,
+    "top_p": 0.9,
+    "max_new_tokens": 600
+  },
   "filter_thresholds": {
-    "min_length": 200,
-    "min_keywords": 2
+    "min_length": 150,
+    "max_length": 1000,
+    "no_repeat_ngram_size": 3,
+    "physics": {
+      "min_formula_count": 1,
+      "min_step_count": 3,
+      "logic_consistency_score": 0.7
+    },
+    "role": {
+      "min_keywords": 2,
+      "style_feature_coverage": 0.6,
+      "physics_accuracy": 0.8
+    }
   }
 }

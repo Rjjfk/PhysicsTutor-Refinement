@@ -4,5 +4,19 @@
   "num_train_epochs": 5,
   "learning_rate": 2e-4,
   "logging_steps": 10,
-  "fp16": true
+  "fp16": true,
+  "preprocess_params": {
+    "max_length": 1024,
+    "train_val_split": 0.9,
+    "raw_data_path": "../data/raw/teacher_chain.json",
+    "processed_data_dir": "../data/processed/physics_train",
+    "tokenizer_path": "../model/base"
+  },
+  "physics_adversarial": {
+    "num_train_epochs": 3,
+    "per_device_train_batch_size": 2,
+    "gen_lr": 1e-4,
+    "disc_lr": 2e-4,
+    "adv_weight": 0.3
+  }
 }

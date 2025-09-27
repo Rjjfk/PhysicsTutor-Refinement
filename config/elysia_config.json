@@ -1,8 +1,23 @@
 {
   "output_dir": "../model/elysia_lora",
-  "per_device_train_batch_size": 2,
-  "num_train_epochs": 3,
-  "learning_rate": 1e-4,
+  "base_physics_model_path": "../model/physics_lora",
+  "num_train_epochs": 4,
+  "learning_rate": 1.5e-4,
   "logging_steps": 10,
-  "fp16": true
+  "fp16": true,
+  "preprocess_params": {
+    "max_length": 1024,
+    "train_val_split": 0.9,
+    "raw_data_path": "../data/raw/elysia_role_data.json",
+    "processed_data_dir": "../data/processed/elysia_train",
+    "tokenizer_path": "../model/base"
+  },
+  "role_adversarial": {
+    "num_train_epochs": 2,
+    "per_device_train_batch_size": 2,
+    "gen_lr": 1e-4,
+    "disc_lr": 2e-4,
+    "adv_weight": 0.4,
+    "style_features": ["飞花", "水晶", "舞会", "～♪", "[轻转裙摆]", "呢～", "呀～"]
+  }
 }

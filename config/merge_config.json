@@ -1,0 +1,12 @@
+{
+  "merge_train": {
+    "base_model_path": "../model/base",  
+    "physics_self_model_path": "../model/physics_self_lora/final_model",  
+    "role_self_model_path": "../model/role_self_lora/final_model",  
+    "physics_data_path": "../data/processed/physics_train",  
+    "role_data_path": "../data/processed/elysia_train",  
+    "batch_size": 4,  
+    "learning_rate": "3e-5",
+    "num_epochs": 1  
+  }
+}

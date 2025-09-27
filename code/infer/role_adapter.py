@@ -4,49 +4,55 @@ from typing import Dict, List, Optional, Tuple
 
 
 class RoleAdapter:
-    """角色适配器，将模型输出转换为不同角色的引导风格"""
+    """角色适配器，将模型输出转换为不同角色的引导风格（强化爱莉希雅物理教学适配）"""
 
     def __init__(self):
-        """初始化角色配置"""
-        # 爱莉希雅专属配置（基于游戏人设+物理教学场景）
+        """初始化角色配置（基于训练数据中的爱莉希雅风格特征）"""
+        # 爱莉希雅专属配置（严格匹配训练数据中的比喻体系和角色特征）
         self.elysia_config = {
-            "suffixes": ["～♪", "呀", "呢", "哟"],  # 标志性后缀
+            "suffixes": ["～♪", "呀", "呢", "哟", "啦"],  # 训练数据中高频出现的后缀
             "actions": [
                 "[轻转裙摆]", "[托腮歪头]", "[指尖绕发丝]",
-                "[递出虚拟飞花]", "[旋转后比心]", "[单膝跪地]"
-            ],  # 行为锚点
-            "metaphors": {  # 物理概念→爱莉希雅比喻
+                "[递出虚拟飞花]", "[旋转后比心]", "[单膝跪地]",
+                "[展开水晶翅膀]", "[轻踮脚尖]"  # 新增训练数据中隐含的动作
+            ],
+            "metaphors": {  # 完全覆盖训练数据中的物理概念比喻
                 "动量守恒": "双人舞的默契步伐～",
-                "动能守恒": "水晶绽放的活力～",
-                "摩擦力": "不想放手的小妖精～",
+                "动能守恒": "水晶般完美的约定～",
+                "摩擦力": "不想放手的小尘埃～",
                 "加速度": "突然加快的舞步节奏～",
-                "弹性势能": "被握紧的花瓣能量～",
-                "牛顿定律": "物理世界的铁律誓言～"
+                "弹性碰撞": "水晶碰撞的完美回声～",
+                "非弹性碰撞": "被棉花吸收的声音～",
+                "自由落体": "音符从高音滑到低音～",
+                "竖直上抛": "被抛向空中的花瓣～",
+                "匀变速直线运动": "音符的尾音滑行～",
+                "多阶段问题": "串起的珍珠项链～",
+                "矢量运算": "音乐的升降调～",
+                "机械能损失": "蜡烛燃烧后的变短～"
             },
-            "stage_mapping": {  # 物理步骤→爱莉希雅"舞会流程"
-                "【审题闭环】": "【舞会邀请·审题】💐 先看看舞伴是谁呀～",
-                "【建模闭环】": "【舞步设计·建模】💎 给它们设计专属符号吧～",
-                "【计算闭环】": "【共舞计算·计算】💃 让数字跳支圆舞曲～",
-                "【迭代闭环】": "【谢幕迭代·迭代】🌸 检查下一支舞的节奏哦～"
+            "stage_mapping": {  # 匹配训练数据中的"分幕剧"流程描述
+                "【审题闭环】": "【舞会开场·审题】💐 先看看这场物理舞会的主角是谁呀～",
+                "【建模闭环】": "【舞步设计·建模】💎 给每个物理量设计专属舞步吧～",
+                "【计算闭环】": "【共舞计算·计算】💃 让公式们跳一支圆舞曲～",
+                "【迭代闭环】": "【谢幕检查·迭代】🌸 检查下一支舞的节奏是否合拍～"
             },
-            "negative_replace": {  # 负面词→治愈系表达
+            "negative_replace": {  # 训练数据中的治愈系表达
                 "错误": "小偏差",
                 "失败": "暂时迷路",
                 "遗漏": "没注意到的小花瓣",
                 "忽略": "暂时忘记了",
                 "困难": "有趣的挑战"
             },
-            "canonical_phrases": [  # 经典台词
+            "canonical_phrases": [  # 训练数据中出现的标志性台词
                 "爱的少女心，可是无所不能的哦～♪",
                 "要心怀感激地收下这束飞花呀！",
                 "无论何时何地，爱莉希雅都会回应你的期待～",
                 "猜猜我在想什么？是与你共舞的邀请哟♪",
-                "前行的道路有群星闪耀，你即是上帝的馈赠",
-                "藏着太多秘密...但别担心，我始终在你身边"
+                "这道题就像一场分幕剧呢～每一幕都要认真对待呀～"  # 新增训练数据中的核心比喻
             ]
         }
 
-        # 鼓励者角色配置
+        # 其他角色配置保持不变（与物理教学场景适配）
         self.encourager_config = {
             "prefix": "太棒了！我们一起来分析这道题：\n\n",
             "suffix": "\n\n你已经掌握了关键思路，继续加油！如果有疑问随时问我～",
@@ -58,7 +64,6 @@ class RoleAdapter:
             }
         }
 
-        # 详细解释者角色配置
         self.detailed_config = {
             "prefix": "让我们一步步拆解这道题，确保每个细节都理解：\n\n",
             "suffix": "\n\n需要我解释哪个步骤的细节吗？",
@@ -70,7 +75,6 @@ class RoleAdapter:
             }
         }
 
-        # 默认角色配置
         self.default_config = {
             "prefix": "解题思路如下：\n\n",
             "suffix": ""
@@ -95,60 +99,59 @@ class RoleAdapter:
             return self._adapt_default(response)
 
     def _adapt_elysia(self, response: str, difficulty: float) -> str:
-        """爱莉希雅角色适配"""
-        # 1. 添加行为前缀（根据难度调整）
-        if difficulty > 0.7:  # 高难度问题
+        """爱莉希雅角色适配（强化与训练数据的风格一致性）"""
+        # 1. 动态行为前缀（匹配训练数据中"场景-动作"关联）
+        if difficulty > 0.7:  # 高难度问题→对应训练中"复杂碰撞"场景的华丽动作
             action = random.choice([
-                "[水晶蔷薇绽放]", "[指尖凝聚星光]",
-                "[单膝跪地]", "[旋转裙摆扬起飞花]"
+                "[水晶蔷薇绽放]", "[指尖凝聚星光]", "[展开水晶翅膀]"
             ])
-            prefix = f"{action} 这道题可是很有挑战性的呢～就像和崩坏战斗一样刺激！让我们一起攻克它吧～♪\n\n"
-        else:  # 普通难度
+            prefix = f"{action} 这道题就像一场华丽的崩坏战役呢～让我们一步步拆解它的秘密吧～♪\n\n"
+        else:  # 普通难度→对应训练中"基础运动"场景的轻快动作
             action = random.choice(self.elysia_config["actions"])
-            prefix = f"{action} 物理题呀～就像一场华丽的舞会呢～让我们一起解开它吧～♪\n\n"
+            prefix = f"{action} 这道物理题呀～就像一场轻松的茶会舞会～让我们一起解开它吧～♪\n\n"
 
-        # 2. 添加标志性后缀
+        # 2. 标志性后缀（确保与训练数据中的语气一致）
         suffix = f"\n\n怎么样？是不是和飞花绽放一样有趣呀～{random.choice(self.elysia_config['suffixes'])}"
 
-        # 3. 替换阶段标签
+        # 3. 阶段标签替换（匹配训练数据中的"分幕剧"比喻）
         for original_stage, elysia_stage in self.elysia_config["stage_mapping"].items():
             response = response.replace(original_stage, elysia_stage)
 
-        # 4. 注入比喻化解释
+        # 4. 物理概念比喻注入（严格对应训练数据中的映射关系）
         for concept, metaphor in self.elysia_config["metaphors"].items():
             if concept in response:
-                response = response.replace(
-                    concept, f"{concept}（就是{metaphor}）"
+                # 只在首次出现时添加比喻，避免重复冗余
+                response = re.sub(
+                    re.escape(concept),
+                    f"{concept}（就像{metaphor}）",
+                    response,
+                    count=1
                 )
 
-        # 5. 替换负面词汇
+        # 5. 负面词汇治愈系转换（与训练数据中的表达统一）
         for negative, positive in self.elysia_config["negative_replace"].items():
-            response = response.replace(negative, positive)
+            response = re.sub(rf"\b{negative}\b", positive, response)
 
-        # 6. 随机插入经典台词（每3次调用插入一次）
-        if random.random() < 0.33:
+        # 6. 经典台词插入（控制频率，与训练数据密度一致）
+        if random.random() < 0.25:  # 25%概率插入，避免过度干扰物理逻辑
             phrases = self.elysia_config["canonical_phrases"]
-            insert_position = random.choice([
-                int(len(response) * 0.25),  # 前1/4处
-                int(len(response) * 0.5),  # 中间
-                int(len(response) * 0.75)  # 后1/4处
-            ])
-            response = (
-                    response[:insert_position] +
-                    f"\n\n{random.choice(phrases)}\n\n" +
-                    response[insert_position:]
-            )
+            # 在段落分隔处插入，不破坏句子结构
+            split_response = re.split(r'[\n。]', response)
+            if len(split_response) >= 3:
+                insert_pos = random.randint(1, len(split_response)-2)
+                split_response.insert(insert_pos, f"\n{random.choice(phrases)}\n")
+                response = '。'.join(split_response)
 
-        # 7. 增强疑问句比例
+        # 7. 疑问句增强（匹配训练数据中"互动感"句式）
         sentences = re.split(r'[。！？]', response)
         new_sentences = []
         for s in sentences:
-            if s and random.random() < 0.4:  # 40%概率添加疑问
-                s = s.rstrip('。！？') + "，对不对呀？"
+            if s and len(s) > 5 and random.random() < 0.3:  # 30%概率，长句优先
+                s = s.rstrip('。！？') + "，对不对呀～"
             new_sentences.append(s)
-        response = ''.join(new_sentences)
+        response = '。'.join(new_sentences)
 
-        # 8. 确保句尾有标志性后缀
+        # 8. 句尾后缀确保（强化角色辨识度）
         if not any(suffix in response[-5:] for suffix in self.elysia_config["suffixes"]):
             response += random.choice(self.elysia_config["suffixes"])
 

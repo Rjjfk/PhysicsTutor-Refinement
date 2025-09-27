@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>爱莉希雅 | PhysicsTutor 训练控制中心</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        elysia: {
+                            pink: '#FF6B9E',
+                            light: '#FFCCE5',
+                            dark: '#E63972',
+                            gold: '#FFD700',
+                            blue: '#87CEEB'
+                        }
+                    },
+                    fontFamily: {
+                        elysia: ['"Comic Sans MS"', 'cursive', 'sans-serif'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'twinkle': 'twinkle 3s ease-in-out infinite',
+                        'petal-fall': 'petalFall 15s linear infinite'
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        twinkle: {
+                            '0%, 100%': { opacity: 0.6 },
+                            '50%': { opacity: 1 },
+                        },
+                        petalFall: {
+                            '0%': { transform: 'translate(0, -10px) rotate(0deg)', opacity: 1 },
+                            '100%': { transform: 'translate(100px, 600px) rotate(720deg)', opacity: 0 },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-shadow-elysia {
+                box-shadow: 0 4px 20px rgba(255, 107, 158, 0.15);
+            }
+            .text-shadow-elysia {
+                text-shadow: 0 2px 4px rgba(255, 107, 158, 0.3);
+            }
+            .border-elysia {
+                border: 1px solid #FFCCE5;
+            }
+            .scrollbar-elysia {
+                scrollbar-width: thin;
+            }
+            .scrollbar-elysia::-webkit-scrollbar {
+                width: 4px;
+            }
+            .scrollbar-elysia::-webkit-scrollbar-thumb {
+                background-color: rgba(255, 107, 158, 0.5);
+                border-radius: 2px;
+            }
+        }
+
+        #particles-js {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 10;
+        }
+
+        .petal {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background-color: #FF6B9E;
+            border-radius: 50% 0;
+            opacity: 0.7;
+            z-index: 5;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-elysia-light/30 to-white min-h-screen flex flex-col overflow-x-hidden">
+    <div id="particles-js"></div>
+    <div id="petals-container"></div>
+
+    <div class="content-wrapper">
+        <header class="bg-white/90 backdrop-blur-sm border-b border-elysia-light card-shadow-elysia z-20">
+            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center space-x-3 animate-float">
+                    <i class="fa fa-heart text-elysia-pink text-2xl animate-twinkle"></i>
+                    <h1 class="text-xl font-bold text-elysia-dark font-elysia text-shadow-elysia">
+                        爱莉希雅的训练工坊 ~♪
+                    </h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="hidden md:flex items-center space-x-2 text-elysia-dark">
+                        <span class="text-sm">当前项目:</span>
+                        <span class="text-sm font-medium font-elysia">PhysicsTutor</span>
+                    </div>
+                    <button id="settingsBtn" class="p-2 rounded-full hover:bg-elysia-light/50 transition-all duration-300">
+                        <i class="fa fa-cog text-elysia-pink"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-grow container mx-auto px-4 py-6">
+            <div class="text-center mb-8 font-elysia text-elysia-dark">
+                <p id="taskHintText" class="text-lg md:text-xl">今天也要和爱莉希雅一起训练出最棒的模型哦～ ✨</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-white rounded-2xl p-5 card-shadow-elysia border-elysia transform hover:scale-[1.02] transition-all duration-300">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h3 class="text-sm font-medium text-elysia-pink">训练状态</h3>
+                            <p id="trainingStatus" class="text-2xl font-bold mt-1 text-elysia-dark font-elysia">未开始</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-elysia-light flex items-center justify-center">
+                            <i class="fa fa-pause text-elysia-pink"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 card-shadow-elysia border-elysia transform hover:scale-[1.02] transition-all duration-300">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h3 class="text-sm font-medium text-elysia-pink">当前轮次</h3>
+                            <p id="currentEpoch" class="text-2xl font-bold mt-1 text-elysia-dark font-elysia">0/0</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-elysia-light flex items-center justify-center">
+                            <i class="fa fa-refresh text-elysia-pink"></i>
+                        </div>
+                    </div>
+                    <div class="flex items-center text-sm text-elysia-dark">
+                        <i class="fa fa-clock-o mr-1"></i>
+                        <span>已运行: </span>
+                        <span id="trainingTime" class="ml-1 font-medium">00:00:00</span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 card-shadow-elysia border-elysia transform hover:scale-[1.02] transition-all duration-300">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h3 class="text-sm font-medium text-elysia-pink">性能指标</h3>
+                            <p class="text-sm text-elysia-pink mt-1">当前损失 / 最佳损失</p>
+                            <p id="lossValues" class="text-xl font-bold mt-1 text-elysia-dark font-elysia">-- / --</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-elysia-light flex items-center justify-center">
+                            <i class="fa fa-tachometer text-elysia-pink"></i>
+                        </div>
+                    </div>
+                    <div class="flex items-center text-sm text-elysia-dark">
+                        <i class="fa fa-check-circle mr-1"></i>
+                        <span>最后更新: </span>
+                        <span id="lastUpdate" class="ml-1 font-medium">未更新</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-5 mb-6 card-shadow-elysia border-elysia">
+                <h3 class="text-lg font-semibold mb-4 text-elysia-dark font-elysia">训练控制 ~♪</h3>
+                <div class="flex flex-wrap gap-4">
+                    <button id="startBtn" class="px-6 py-3 bg-gradient-to-r from-elysia-pink to-elysia-dark text-white rounded-lg hover:opacity-90 transition-all duration-300 flex items-center font-elysia">
+                        <i class="fa fa-play mr-2"></i> 开始训练
+                    </button>
+                    <button id="pauseBtn" class="px-6 py-3 bg-gradient-to-r from-elysia-light to-elysia-pink text-white rounded-lg hover:opacity-90 transition-all duration-300 flex items-center font-elysia" disabled>
+                        <i class="fa fa-pause mr-2"></i> 暂停训练
+                    </button>
+                    <button id="stopBtn" class="px-6 py-3 bg-gradient-to-r from-gray-300 to-elysia-dark text-white rounded-lg hover:opacity-90 transition-all duration-300 flex items-center font-elysia" disabled>
+                        <i class="fa fa-stop mr-2"></i> 终止训练
+                    </button>
+                    <button id="saveBtn" class="px-6 py-3 bg-gradient-to-r from-elysia-blue to-elysia-pink text-white rounded-lg hover:opacity-90 transition-all duration-300 flex items-center font-elysia" disabled>
+                        <i class="fa fa-save mr-2"></i> 保存模型
+                    </button>
+                    <div class="ml-auto flex items-center">
+                        <label class="inline-flex items-center mr-4 text-elysia-dark">
+                            <input type="checkbox" id="autoSave" class="form-checkbox h-5 w-5 text-elysia-pink rounded" checked>
+                            <span class="ml-2 font-elysia">自动保存</span>
+                        </label>
+                        <label class="inline-flex items-center text-elysia-dark">
+                            <input type="checkbox" id="autoResume" class="form-checkbox h-5 w-5 text-elysia-pink rounded">
+                            <span class="ml-2 font-elysia">自动恢复</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white rounded-2xl p-5 card-shadow-elysia border-elysia">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-elysia-dark font-elysia">训练损失曲线 ✨</h3>
+                            <div class="flex space-x-2">
+                                <button class="text-sm px-3 py-1 bg-elysia-light text-elysia-dark rounded-full hover:bg-elysia-pink hover:text-white transition-all duration-300 font-elysia">
+                                    损失
+                                </button>
+                                <button class="text-sm px-3 py-1 bg-elysia-light text-elysia-dark rounded-full hover:bg-elysia-pink hover:text-white transition-all duration-300 font-elysia">
+                                    准确率
+                                </button>
+                            </div>
+                        </div>
+                        <div class="h-80">
+                            <canvas id="lossChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-2xl p-5 card-shadow-elysia border-elysia">
+                            <h3 class="text-lg font-semibold mb-4 text-elysia-dark font-elysia">模型性能指标</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span id="firstMetricLabel" class="text-elysia-pink">物理公式准确率</span>
+                                        <span id="physicsAccuracy" class="font-medium text-elysia-dark">0%</span>
+                                    </div>
+                                    <div class="w-full bg-elysia-light/50 rounded-full h-2">
+                                        <div id="physicsAccuracyBar" class="bg-elysia-pink h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span id="secondMetricLabel" class="text-elysia-pink">角色风格一致性</span>
+                                        <span id="roleAccuracy" class="font-medium text-elysia-dark">0%</span>
+                                    </div>
+                                    <div class="w-full bg-elysia-light/50 rounded-full h-2">
+                                        <div id="roleAccuracyBar" class="bg-elysia-pink h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-elysia-pink">训练稳定性</span>
+                                        <span id="stabilityScore" class="font-medium text-elysia-dark">0%</span>
+                                    </div>
+                                    <div class="w-full bg-elysia-light/50 rounded-full h-2">
+                                        <div id="stabilityBar" class="bg-elysia-pink h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-elysia-pink">数据利用率</span>
+                                        <span id="dataUsage" class="font-medium text-elysia-dark">0%</span>
+                                    </div>
+                                    <div class="w-full bg-elysia-light/50 rounded-full h-2">
+                                        <div id="dataUsageBar" class="bg-elysia-pink h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl p-5 card-shadow-elysia border-elysia">
+                            <h3 class="text-lg font-semibold mb-4 text-elysia-dark font-elysia">训练配置 ~♪</h3>
+                            <div class="mb-4 pb-3 border-b border-elysia-light">
+                                <h4 class="text-sm font-medium text-elysia-pink mb-2">当前设备信息</h4>
+                                <div class="text-sm space-y-1">
+                                    <p>GPU: <span id="gpuInfo" class="text-elysia-dark">加载中...</span></p>
+                                    <p>CPU: <span id="cpuInfo" class="text-elysia-dark">加载中...</span></p>
+                                    <p>内存: <span id="memoryInfo" class="text-elysia-dark">加载中...</span></p>
+                                </div>
+                            </div>
+                            <div class="space-y-3 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-elysia-pink">任务类型:</span>
+                                    <span id="taskTypeDisplay" class="font-medium text-elysia-dark font-elysia">物理对抗训练</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-elysia-pink">模型类型:</span>
+                                    <span id="modelType" class="font-medium text-elysia-dark font-elysia">ChatGLM + LoRA</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-elysia-pink">训练模式:</span>
+                                    <span id="trainMode" class="font-medium text-elysia-dark font-elysia">对抗式训练</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-elysia-pink">批次大小:</span>
+                                    <span id="batchSize" class="font-medium text-elysia-dark font-elysia">2</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-elysia-pink">学习率:</span>
+                                    <span id="learningRate" class="font-medium text-elysia-dark font-elysia">1e-4</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-elysia-pink">总轮次:</span>
+                                    <span id="totalEpochs" class="font-medium text-elysia-dark font-elysia">3</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-elysia-pink">数据量:</span>
+                                    <span id="dataAmount" class="font-medium text-elysia-dark font-elysia">2,450 条</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-elysia-pink">设备:</span>
+                                    <span id="deviceInfo" class="font-medium text-elysia-dark font-elysia">检测中...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 card-shadow-elysia border-elysia">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-elysia-dark font-elysia">训练日志 ✨</h3>
+                        <button id="clearLogs" class="text-sm text-elysia-pink hover:text-elysia-dark transition-all duration-300">
+                            <i class="fa fa-trash-o mr-1"></i> 清空
+                        </button>
+                    </div>
+                    <div id="logContainer" class="h-[600px] overflow-y-auto scrollbar-elysia bg-elysia-light/30 rounded-lg p-3 text-sm font-mono space-y-1">
+                        <div class="text-elysia-dark/70">[系统] 爱莉希雅的训练工坊已启动～</div>
+                        <div class="text-elysia-dark/70">[系统] 正在检测硬件配置...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-5 card-shadow-elysia border-elysia mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-elysia-dark font-elysia">训练历史数据</h3>
+                    <div class="flex items-center">
+                        <div class="relative mr-4">
+                            <input type="text" placeholder="搜索轮次..." class="pl-8 pr-3 py-1 border border-elysia-light rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-elysia-pink/50">
+                            <i class="fa fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-elysia-pink"></i>
+                        </div>
+                        <button class="text-sm px-3 py-1 bg-elysia-light text-elysia-dark rounded-lg hover:bg-elysia-pink hover:text-white transition-all duration-300 font-elysia">
+                            <i class="fa fa-download mr-1"></i> 导出数据
+                        </button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-elysia-light">
+                        <thead>
+                            <tr>
+                                <th class="px-4 py-3 bg-elysia-light/30 text-left text-xs font-medium text-elysia-pink uppercase tracking-wider">轮次</th>
+                                <th class="px-4 py-3 bg-elysia-light/30 text-left text-xs font-medium text-elysia-pink uppercase tracking-wider">损失值</th>
+                                <th class="px-4 py-3 bg-elysia-light/30 text-left text-xs font-medium text-elysia-pink uppercase tracking-wider">物理准确率</th>
+                                <th class="px-4 py-3 bg-elysia-light/30 text-left text-xs font-medium text-elysia-pink uppercase tracking-wider">角色一致性</th>
+                                <th class="px-4 py-3 bg-elysia-light/30 text-left text-xs font-medium text-elysia-pink uppercase tracking-wider">训练时间</th>
+                                <th class="px-4 py-3 bg-elysia-light/30 text-left text-xs font-medium text-elysia-pink uppercase tracking-wider">状态</th>
+                                <th class="px-4 py-3 bg-elysia-light/30 text-left text-xs font-medium text-elysia-pink uppercase tracking-wider">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody" class="bg-white divide-y divide-elysia-light/50">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <footer class="bg-elysia-dark/90 text-white py-4">
+            <div class="container mx-auto px-4">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="text-sm text-elysia-light mb-2 md:mb-0 font-elysia">
+                        © 爱莉希雅的训练工坊 ~ 让每一次训练都充满惊喜 ✨
+                    </div>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-elysia-light hover:text-white transition-all duration-300">
+                            <i class="fa fa-question-circle"></i> 帮助
+                        </a>
+                        <a href="#" class="text-elysia-light hover:text-white transition-all duration-300">
+                            <i class="fa fa-file-text-o"></i> 文档
+                        </a>
+                        <a href="#" class="text-elysia-light hover:text-white transition-all duration-300">
+                            <i class="fa fa-github"></i> 源码
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+        <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border-elysia card-shadow-elysia transform transition-all duration-300 scale-95 opacity-0" id="modalContent">
+                <div class="p-5 border-b border-elysia-light flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-elysia-dark font-elysia">训练设置 ~♪</h3>
+                    <button id="closeSettings" class="text-elysia-pink hover:text-elysia-dark transition-all duration-300">
+                        <i class="fa fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="p-5 space-y-5">
+                    <div>
+                        <h4 class="text-lg font-medium mb-3 text-elysia-dark font-elysia">基本参数</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-elysia-pink mb-1">任务类型 <span class="text-red-500">*</span></label>
+                                <select id="settingTaskType" class="w-full px-3 py-2 border border-elysia-light rounded-lg focus:outline-none focus:ring-2 focus:ring-elysia-pink/50">
+                                    <option value="physics_adv">物理对抗训练</option>
+                                    <option value="role_adv">角色对抗训练</option>
+                                    <option value="physics_self">物理自训练</option>
+                                    <option value="role_self">角色自训练</option>
+                                    <option value="merge">合并微调</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-elysia-pink mb-1">训练轮次 <span class="text-red-500">*</span></label>
+                                <input type="number" id="settingEpochs" value="3" min="1" class="w-full px-3 py-2 border border-elysia-light rounded-lg focus:outline-none focus:ring-2 focus:ring-elysia-pink/50">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-elysia-pink mb-1">批次大小 <span class="text-red-500">*</span></label>
+                                <input type="number" id="settingBatchSize" value="2" min="1" class="w-full px-3 py-2 border border-elysia-light rounded-lg focus:outline-none focus:ring-2 focus:ring-elysia-pink/50">
+                                <p id="batchHint" class="text-xs text-gray-500 mt-1">推荐：GPU≥8GB用2，GPU<8GB用1</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-elysia-pink mb-1">学习率 <span class="text-red-500">*</span></label>
+                                <input type="text" id="settingLearningRate" value="1e-4" class="w-full px-3 py-2 border border-elysia-light rounded-lg focus:outline-none focus:ring-2 focus:ring-elysia-pink/50">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-elysia-pink mb-1">训练模式</label>
+                                <select id="settingTrainMode" class="w-full px-3 py-2 border border-elysia-light rounded-lg focus:outline-none focus:ring-2 focus:ring-elysia-pink/50">
+                                    <option value="adversarial">对抗式训练</option>
+                                    <option value="self">自训练</option>
+                                    <option value="fine-tune">精细微调</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-elysia-pink mb-1">基础模型路径</label>
+                                <input type="text" id="settingBaseModelPath" value="./model/physics_lora" class="w-full px-3 py-2 border border-elysia-light rounded-lg focus:outline-none focus:ring-2 focus:ring-elysia-pink/50">
+                                <p class="text-xs text-gray-500 mt-1">对抗/自训练的基础模型路径（合并微调无需填写）</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-lg font-medium mb-3 text-elysia-dark font-elysia">数据设置</h4>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-elysia-pink mb-1">训练数据集路径 <span class="text-red-500">*</span></label>
+                                <input type="text" id="settingDataPath" value="./data/processed/physics_train" class="w-full px-3 py-2 border border-elysia-light rounded-lg focus:outline-none focus:ring-2 focus:ring-elysia-pink/50">
+                            </div>
+                            <div>
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" id="settingShuffleData" checked class="form-checkbox h-5 w-5 text-elysia-pink rounded">
+                                    <span class="ml-2 text-elysia-dark font-elysia">训练前打乱数据</span>
+                                </label>
+                            </div>
+                            <div>
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" id="settingAugmentData" class="form-checkbox h-5 w-5 text-elysia-pink rounded">
+                                    <span class="ml-2 text-elysia-dark font-elysia">使用数据增强</span>
+                                </label>
+                            </div>
+                            <div id="selfTrainExtraSettings" class="pl-6 border-l-2 border-elysia-light">
+                                <label class="block text-sm font-medium text-elysia-pink mb-1">自训练循环次数</label>
+                                <input type="number" id="settingLoopCount" value="2" min="1" class="w-full px-3 py-2 border border-elysia-light rounded-lg focus:outline-none focus:ring-2 focus:ring-elysia-pink/50">
+                                <label class="block text-sm font-medium text-elysia-pink mb-1 mt-2">生成样本数量</label>
+                                <input type="number" id="settingGenerateNum" value="500" min="100" class="w-full px-3 py-2 border border-elysia-light rounded-lg focus:outline-none focus:ring-2 focus:ring-elysia-pink/50">
+                            </div>
+                            <div id="mergeExtraSettings" class="pl-6 border-l-2 border-elysia-light hidden">
+                                <label class="block text-sm font-medium text-elysia-pink mb-1">物理自训练模型路径 <span class="text-red-500">*</span></label>
+                                <input type="text" id="settingPhysicsModelPath" value="./model/physics_self_lora/final_model" class="w-full px-3 py-2 border border-elysia-light rounded-lg focus:outline-none focus:ring-2 focus:ring-elysia-pink/50">
+                                <label class="block text-sm font-medium text-elysia-pink mb-1 mt-2">角色自训练模型路径 <span class="text-red-500">*</span></label>
+                                <input type="text" id="settingRoleModelPath" value="./model/role_self_lora/final_model" class="w-full px-3 py-2 border border-elysia-light rounded-lg focus:outline-none focus:ring-2 focus:ring-elysia-pink/50">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-lg font-medium mb-3 text-elysia-dark font-elysia">保存设置</h4>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-elysia-pink mb-1">模型保存路径 <span class="text-red-500">*</span></label>
+                                <input type="text" id="settingSavePath" value="./model/physics_adversarial_lora" class="w-full px-3 py-2 border border-elysia-light rounded-lg focus:outline-none focus:ring-2 focus:ring-elysia-pink/50">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-elysia-pink mb-1">保存间隔（轮次）</label>
+                                <input type="number" id="settingSaveInterval" value="2" min="1" class="w-full px-3 py-2 border border-elysia-light rounded-lg focus:outline-none focus:ring-2 focus:ring-elysia-pink/50">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-5 border-t border-elysia-light flex justify-end">
+                    <button id="cancelSettings" class="px-4 py-2 border border-elysia-light text-elysia-dark rounded-lg mr-3 hover:bg-elysia-light/50 transition-all duration-300 font-elysia">取消</button>
+                    <button id="saveSettings" class="px-4 py-2 bg-elysia-pink text-white rounded-lg hover:bg-elysia-dark transition-all duration-300 font-elysia">保存设置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            particlesJS('particles-js', {
+                "particles": {
+                    "number": { "value": 50, "density": { "enable": true, "value_area": 800 } },
+                    "color": { "value": "#FF6B9E" },
+                    "shape": { "type": "circle" },
+                    "opacity": {
+                        "value": 0.5,
+                        "random": true,
+                        "anim": { "enable": true, "speed": 1, "opacity_min": 0.1, "sync": false }
+                    },
+                    "size": {
+                        "value": 3,
+                        "random": true,
+                        "anim": { "enable": true, "speed": 2, "size_min": 0.5, "sync": false }
+                    },
+                    "line_linked": { "enable": false },
+                    "move": {
+                        "enable": true,
+                        "speed": 1,
+                        "direction": "none",
+                        "random": true,
+                        "straight": false,
+                        "out_mode": "out",
+                        "bounce": false
+                    }
+                },
+                "interactivity": { "detect_on": "canvas", "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" }, "resize": true } },
+                "retina_detect": true
+            });
+
+            function createPetals() {
+                const container = document.getElementById('petals-container');
+                const colors = ['#FF6B9E', '#FFCCE5', '#FFD700', '#87CEEB'];
+
+                setInterval(() => {
+                    if (document.querySelectorAll('.petal').length < 15) {
+                        const petal = document.createElement('div');
+                        petal.className = 'petal';
+                        petal.style.left = `${Math.random() * 100}vw`;
+                        petal.style.top = '-20px';
+                        petal.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                        petal.style.transform = `rotate(${Math.random() * 360}deg)`;
+                        petal.style.animationDuration = `${5 + Math.random() * 15}s`;
+                        petal.style.animationDelay = `${Math.random() * 5}s`;
+                        petal.style.animationName = 'petalFall';
+
+                        container.appendChild(petal);
+                        setTimeout(() => petal.remove(), 20000);
+                    }
+                }, 1000);
+            }
+            createPetals();
+        });
+
+        const state = {
+            isTraining: false,
+            isPaused: false,
+            currentEpoch: 0,
+            totalEpochs: 10,
+            trainingTime: "00:00:00",
+            lossHistory: [],
+            accuracyHistory: [],
+            lastUpdateTime: null,
+            logEntries: [],
+            currentTaskType: "physics_adv"
+        };
+
+        const elements = {
+            trainingStatus: document.getElementById('trainingStatus'),
+            currentEpoch: document.getElementById('currentEpoch'),
+            trainingTime: document.getElementById('trainingTime'),
+            lossValues: document.getElementById('lossValues'),
+            lastUpdate: document.getElementById('lastUpdate'),
+            startBtn: document.getElementById('startBtn'),
+            pauseBtn: document.getElementById('pauseBtn'),
+            stopBtn: document.getElementById('stopBtn'),
+            saveBtn: document.getElementById('saveBtn'),
+            autoSave: document.getElementById('autoSave'),
+            autoResume: document.getElementById('autoResume'),
+            clearLogs: document.getElementById('clearLogs'),
+            logContainer: document.getElementById('logContainer'),
+            settingsBtn: document.getElementById('settingsBtn'),
+            settingsModal: document.getElementById('settingsModal'),
+            modalContent: document.getElementById('modalContent'),
+            closeSettings: document.getElementById('closeSettings'),
+            cancelSettings: document.getElementById('cancelSettings'),
+            saveSettings: document.getElementById('saveSettings'),
+            physicsAccuracy: document.getElementById('physicsAccuracy'),
+            physicsAccuracyBar: document.getElementById('physicsAccuracyBar'),
+            roleAccuracy: document.getElementById('roleAccuracy'),
+            roleAccuracyBar: document.getElementById('roleAccuracyBar'),
+            stabilityScore: document.getElementById('stabilityScore'),
+            stabilityBar: document.getElementById('stabilityBar'),
+            dataUsage: document.getElementById('dataUsage'),
+            dataUsageBar: document.getElementById('dataUsageBar'),
+            historyTableBody: document.getElementById('historyTableBody'),
+            gpuInfo: document.getElementById('gpuInfo'),
+            cpuInfo: document.getElementById('cpuInfo'),
+            memoryInfo: document.getElementById('memoryInfo'),
+            deviceInfo: document.getElementById('deviceInfo'),
+            batchHint: document.getElementById('batchHint'),
+            settingBatchSize: document.getElementById('settingBatchSize'),
+            settingTaskType: document.getElementById('settingTaskType'),
+            taskHintText: document.getElementById('taskHintText'),
+            taskTypeDisplay: document.getElementById('taskTypeDisplay'),
+            firstMetricLabel: document.getElementById('firstMetricLabel'),
+            secondMetricLabel: document.getElementById('secondMetricLabel'),
+            selfTrainExtraSettings: document.getElementById('selfTrainExtraSettings'),
+            mergeExtraSettings: document.getElementById('mergeExtraSettings')
+        };
+
+        let lossChart;
+        function initChart() {
+            const ctx = document.getElementById('lossChart').getContext('2d');
+            lossChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '训练损失',
+                        data: [],
+                        borderColor: '#FF6B9E',
+                        backgroundColor: 'rgba(255, 107, 158, 0.1)',
+                        tension: 0.3,
+                        fill: true,
+                        pointBackgroundColor: '#FF6B9E',
+                        pointBorderColor: '#fff',
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        x: { title: { display: true, text: '轮次', color: '#E63972' }, grid: { color: 'rgba(255, 204, 229, 0.2)' } },
+                        y: { title: { display: true, text: '损失值', color: '#E63972' }, min: 0, grid: { color: 'rgba(255, 204, 229, 0.2)' } }
+                    },
+                    animation: { duration: 800, easing: 'easeOutQuart' },
+                    plugins: { legend: { labels: { color: '#E63972', font: { family: '"Comic Sans MS", cursive' } } } }
+                }
+            });
+        }
+
+        function updateChart(epoch, loss) {
+            const exists = lossChart.data.labels.some(label => label === epoch);
+            if (!exists) {
+                lossChart.data.labels.push(epoch);
+                lossChart.data.datasets[0].data.push(loss);
+                if (lossChart.data.labels.length > 20) {
+                    lossChart.data.labels.shift();
+                    lossChart.data.datasets[0].data.shift();
+                }
+                lossChart.update();
+            }
+        }
+
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            const logElement = document.createElement('div');
+            logElement.className = type === 'error' ? 'text-red-500' :
+                                  type === 'success' ? 'text-elysia-dark' :
+                                  type === 'warning' ? 'text-yellow-500' : 'text-elysia-dark/80';
+            logElement.textContent = logEntry;
+            elements.logContainer.appendChild(logElement);
+            elements.logContainer.scrollTop = elements.logContainer.scrollHeight;
+        }
+
+        function clearLogs() {
+            elements.logContainer.innerHTML = '';
+            addLog('日志已清空～', 'success');
+        }
+
+        function updateTrainingStatus() {
+            const taskTypeMap = {
+                "physics_adv": "物理对抗训练",
+                "role_adv": "角色对抗训练",
+                "physics_self": "物理自训练",
+                "role_self": "角色自训练",
+                "merge": "合并微调"
+            };
+            elements.taskHintText.textContent = `正在进行${taskTypeMap[state.currentTaskType]}～ 爱莉希雅会一直陪着你哦 ✨`;
+            elements.taskTypeDisplay.textContent = taskTypeMap[state.currentTaskType];
+
+            if (state.isTraining) {
+                if (state.isPaused) {
+                    elements.trainingStatus.textContent = '已暂停';
+                    elements.trainingStatus.className = 'text-2xl font-bold mt-1 text-yellow-500 font-elysia';
+                } else {
+                    elements.trainingStatus.textContent = '训练中';
+                    elements.trainingStatus.className = 'text-2xl font-bold mt-1 text-elysia-dark font-elysia';
+                }
+            } else {
+                elements.trainingStatus.textContent = '未开始';
+                elements.trainingStatus.className = 'text-2xl font-bold mt-1 text-elysia-pink/70 font-elysia';
+            }
+            elements.currentEpoch.textContent = `${state.currentEpoch}/${state.totalEpochs}`;
+            elements.trainingTime.textContent = state.trainingTime;
+            elements.startBtn.disabled = state.isTraining && !state.isPaused;
+            elements.pauseBtn.disabled = !state.isTraining || state.isPaused;
+            elements.stopBtn.disabled = !state.isTraining;
+            elements.saveBtn.disabled = !state.isTraining;
+        }
+
+        function updateMetrics(physicsAcc, roleAcc, stability, dataUsage) {
+            physicsAcc = physicsAcc || 0;
+            roleAcc = roleAcc || 0;
+            stability = stability || 0;
+            dataUsage = dataUsage || 0;
+
+            if (state.currentTaskType.includes("physics")) {
+                elements.firstMetricLabel.textContent = "物理公式准确率";
+                elements.secondMetricLabel.textContent = "步骤完整性";
+                elements.physicsAccuracy.textContent = `${physicsAcc}%`;
+                elements.physicsAccuracyBar.style.width = `${physicsAcc}%`;
+                elements.roleAccuracy.textContent = `${roleAcc}%`;
+                elements.roleAccuracyBar.style.width = `${roleAcc}%`;
+            } else if (state.currentTaskType.includes("role")) {
+                elements.firstMetricLabel.textContent = "角色风格覆盖率";
+                elements.secondMetricLabel.textContent = "物理内容准确率";
+                elements.physicsAccuracy.textContent = `${roleAcc}%`;
+                elements.physicsAccuracyBar.style.width = `${roleAcc}%`;
+                elements.roleAccuracy.textContent = `${physicsAcc}%`;
+                elements.roleAccuracyBar.style.width = `${physicsAcc}%`;
+            } else if (state.currentTaskType === "merge") {
+                elements.firstMetricLabel.textContent = "物理公式准确率";
+                elements.secondMetricLabel.textContent = "角色风格一致性";
+                elements.physicsAccuracy.textContent = `${physicsAcc}%`;
+                elements.physicsAccuracyBar.style.width = `${physicsAcc}%`;
+                elements.roleAccuracy.textContent = `${roleAcc}%`;
+                elements.roleAccuracyBar.style.width = `${roleAcc}%`;
+            }
+
+            elements.stabilityScore.textContent = `${stability}%`;
+            elements.stabilityBar.style.width = `${stability}%`;
+            elements.dataUsage.textContent = `${dataUsage}%`;
+            elements.dataUsageBar.style.width = `${dataUsage}%`;
+        }
+
+        function updateLoss(currentLoss, bestLoss) {
+            currentLoss = currentLoss || 0;
+            bestLoss = bestLoss || 0;
+            elements.lossValues.textContent = `${parseFloat(currentLoss).toFixed(4)} / ${parseFloat(bestLoss).toFixed(4)}`;
+            const now = new Date();
+            elements.lastUpdate.textContent = now.toLocaleTimeString();
+            state.lastUpdateTime = now;
+        }
+
+        function addHistoryEntry(epoch, loss, physicsAcc, roleAcc, time, status) {
+            const exists = document.querySelector(`tr:has(td:first-child:contains('${epoch}'))`);
+            if (exists) return;
+            const row = document.createElement('tr');
+            row.className = epoch === state.currentEpoch ? 'bg-elysia-light/30' : '';
+            row.addEventListener('mouseenter', () => row.classList.add('bg-elysia-light/20'));
+            row.addEventListener('mouseleave', () => {
+                if (epoch !== state.currentEpoch) row.classList.remove('bg-elysia-light/20');
+            });
+            const statusClass = status === 'completed' ? 'bg-green-100 text-green-800' :
+                               status === 'running' ? 'bg-elysia-light text-elysia-dark' :
+                               status === 'failed' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800';
+            const statusText = status === 'completed' ? '已完成' :
+                              status === 'running' ? '进行中' :
+                              status === 'failed' ? '失败' : '暂停';
+            row.innerHTML = `
+                <td class="px-4 py-3 whitespace-nowrap font-elysia">${epoch}</td>
+                <td class="px-4 py-3 whitespace-nowrap">${parseFloat(loss || 0).toFixed(4)}</td>
+                <td class="px-4 py-3 whitespace-nowrap">${physicsAcc || 0}%</td>
+                <td class="px-4 py-3 whitespace-nowrap">${roleAcc || 0}%</td>
+                <td class="px-4 py-3 whitespace-nowrap">${time || "00:00"}</td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                    <span class="px-2 py-1 text-xs rounded-full ${statusClass}">${statusText}</span>
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm">
+                    <button class="text-elysia-pink hover:text-elysia-dark mr-3 transition-colors duration-300">查看详情</button>
+                    <button class="text-gray-600 hover:text-elysia-dark transition-colors duration-300">加载模型</button>
+                </td>
+            `;
+            elements.historyTableBody.prepend(row);
+        }
+
+        function fetchHardwareInfo() {
+            fetch('http://localhost:5000/api/system-info')
+                .then(response => {
+                    if (!response.ok) throw new Error(`硬件接口请求失败: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success && data.data) {
+                        const info = data.data;
+                        if (info.gpu.available) {
+                            elements.gpuInfo.textContent = `${info.gpu.name} (显存: ${info.gpu.memory})`;
+                            elements.deviceInfo.textContent = `GPU (${info.gpu.name})`;
+                            const gpuMem = parseFloat(info.gpu.memory) || 0;
+                            const [recommendBatch, hintText] = gpuMem < 8 ? [1, `当前GPU显存${gpuMem}GB，推荐批次大小1`] :
+                                                               gpuMem >=24 ? [4, `当前GPU显存${gpuMem}GB，推荐批次大小4`] :
+                                                               [2, "推荐：GPU≥8GB用2，否则用1"];
+                            elements.settingBatchSize.value = recommendBatch;
+                            document.getElementById('batchSize').textContent = recommendBatch;
+                            elements.batchHint.textContent = hintText;
+                        } else {
+                            elements.gpuInfo.textContent = "无可用GPU（使用CPU训练）";
+                            elements.deviceInfo.textContent = "CPU";
+                            elements.settingBatchSize.value = 1;
+                            document.getElementById('batchSize').textContent = 1;
+                            elements.batchHint.textContent = "无GPU，推荐批次大小1";
+                        }
+                        elements.cpuInfo.textContent = `${info.cpu.name || "未知CPU"} (${info.cpu.cores}核${info.cpu.threads}线程, 使用率: ${info.cpu.usage || 0}%)`;
+                        elements.memoryInfo.textContent = `总内存: ${info.memory.total || "未知"}, 可用: ${info.memory.available || "未知"} (使用率: ${info.memory.usage || 0}%)`;
+                        addLog(`硬件检测完成：${elements.deviceInfo.textContent}，内存${info.memory.total}`, 'success');
+                    } else {
+                        throw new Error(data.message || "硬件信息为空");
+                    }
+                })
+                .catch(error => {
+                    addLog(`硬件检测失败：${error.message}，请检查后端服务是否启动`, 'error');
+                    elements.gpuInfo.textContent = "检测失败";
+                    elements.cpuInfo.textContent = "检测失败";
+                    elements.memoryInfo.textContent = "检测失败";
+                    elements.deviceInfo.textContent = "未知设备";
+                });
+        }
+
+        function fillDefaultParamsByTask() {
+            const taskType = elements.settingTaskType.value;
+            state.currentTaskType = taskType;
+
+            const taskDefaults = {
+                "physics_adv": {
+                    dataPath: "./data/processed/physics_train",
+                    savePath: "./model/physics_adversarial_lora",
+                    epochs: 3,
+                    batch: 2,
+                    lr: "1e-4",
+                    trainMode: "adversarial",
+                    baseModel: "./model/physics_lora",
+                    showSelf: false,
+                    showMerge: false,
+                    firstMetric: "物理公式准确率",
+                    secondMetric: "步骤完整性"
+                },
+                "role_adv": {
+                    dataPath: "./data/processed/elysia_train",
+                    savePath: "./model/role_adversarial_lora",
+                    epochs: 2,
+                    batch: 2,
+                    lr: "1e-4",
+                    trainMode: "adversarial",
+                    baseModel: "./model/elysia_lora",
+                    showSelf: false,
+                    showMerge: false,
+                    firstMetric: "角色风格覆盖率",
+                    secondMetric: "物理内容准确率"
+                },
+                "physics_self": {
+                    dataPath: "./data/processed/physics_train",
+                    savePath: "./model/physics_self_lora",
+                    epochs: 2,
+                    batch: 1,
+                    lr: "5e-5",
+                    trainMode: "self",
+                    baseModel: "./model/physics_adversarial_lora",
+                    loopCount: 2,
+                    generateNum: 500,
+                    showSelf: true,
+                    showMerge: false,
+                    firstMetric: "物理公式准确率",
+                    secondMetric: "步骤完整性"
+                },
+                "role_self": {
+                    dataPath: "./data/processed/elysia_train",
+                    savePath: "./model/role_self_lora",
+                    epochs: 2,
+                    batch: 1,
+                    lr: "5e-5",
+                    trainMode: "self",
+                    baseModel: "./model/role_adversarial_lora",
+                    loopCount: 2,
+                    generateNum: 300,
+                    showSelf: true,
+                    showMerge: false,
+                    firstMetric: "角色风格覆盖率",
+                    secondMetric: "物理内容准确率"
+                },
+                "merge": {
+                    dataPath: "./data/processed/combined_train",
+                    savePath: "./model/merged_final_model",
+                    epochs: 1,
+                    batch: 4,
+                    lr: "3e-5",
+                    trainMode: "fine-tune",
+                    baseModel: "",
+                    physicsModel: "./model/physics_self_lora/final_model",
+                    roleModel: "./model/role_self_lora/final_model",
+                    showSelf: false,
+                    showMerge: true,
+                    firstMetric: "物理公式准确率",
+                    secondMetric: "角色风格一致性"
+                }
+            };
+
+            const defaults = taskDefaults[taskType];
+            if (defaults) {
+                document.getElementById('settingDataPath').value = defaults.dataPath;
+                document.getElementById('settingSavePath').value = defaults.savePath;
+                document.getElementById('settingEpochs').value = defaults.epochs;
+                document.getElementById('settingBatchSize').value = defaults.batch;
+                document.getElementById('settingLearningRate').value = defaults.lr;
+                document.getElementById('settingTrainMode').value = defaults.trainMode;
+                document.getElementById('settingBaseModelPath').value = defaults.baseModel;
+
+                if (defaults.showSelf) {
+                    elements.selfTrainExtraSettings.classList.remove('hidden');
+                    document.getElementById('settingLoopCount').value = defaults.loopCount;
+                    document.getElementById('settingGenerateNum').value = defaults.generateNum;
+                } else {
+                    elements.selfTrainExtraSettings.classList.add('hidden');
+                }
+
+                if (defaults.showMerge) {
+                    elements.mergeExtraSettings.classList.remove('hidden');
+                    document.getElementById('settingPhysicsModelPath').value = defaults.physicsModel;
+                    document.getElementById('settingRoleModelPath').value = defaults.roleModel;
+                } else {
+                    elements.mergeExtraSettings.classList.add('hidden');
+                }
+
+                document.getElementById('batchSize').textContent = defaults.batch;
+                document.getElementById('learningRate').textContent = defaults.lr;
+                document.getElementById('totalEpochs').textContent = defaults.epochs;
+                document.getElementById('trainMode').textContent =
+                    defaults.trainMode === "adversarial" ? "对抗式训练" :
+                    defaults.trainMode === "self" ? "自训练" : "精细微调";
+
+                elements.firstMetricLabel.textContent = defaults.firstMetric;
+                elements.secondMetricLabel.textContent = defaults.secondMetric;
+                elements.taskTypeDisplay.textContent = taskDefaults[taskType];
+            }
+            updateTrainingStatus();
+        }
+
+        function startTraining() {
+            const taskType = elements.settingTaskType.value;
+            const config = {
+                task_type: taskType,
+                num_train_epochs: parseInt(document.getElementById('settingEpochs').value) || 10,
+                per_device_train_batch_size: parseInt(document.getElementById('settingBatchSize').value) || 2,
+                learning_rate: document.getElementById('settingLearningRate').value || "1e-4",
+                data_path: document.getElementById('settingDataPath').value || "./data/processed/physics_train",
+                output_dir: document.getElementById('settingSavePath').value || "./model/physics_adversarial_lora",
+                save_interval: parseInt(document.getElementById('settingSaveInterval').value) || 2,
+                auto_save: elements.autoSave.checked,
+                shuffle_data: document.getElementById('settingShuffleData').checked,
+                augment_data: document.getElementById('settingAugmentData').checked,
+                base_model_path: document.getElementById('settingBaseModelPath').value
+            };
+
+            if (taskType.includes("self")) {
+                config.loop_count = parseInt(document.getElementById('settingLoopCount').value) || 2;
+                config.generate_num_samples = parseInt(document.getElementById('settingGenerateNum').value) || 500;
+            } else if (taskType === "merge") {
+                config.physics_model_path = document.getElementById('settingPhysicsModelPath').value;
+                config.role_model_path = document.getElementById('settingRoleModelPath').value;
+            }
+
+            if (!config.data_path) {
+                addLog('[错误] 请设置训练数据集路径', 'error');
+                return;
+            }
+
+            fetch('http://localhost:5000/api/start-training', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            })
+            .then(response => {
+                if (!response.ok) throw new Error(`训练启动失败: ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    state.isTraining = true;
+                    state.isPaused = false;
+                    state.currentEpoch = 0;
+                    state.totalEpochs = config.num_train_epochs;
+                    state.currentTaskType = taskType;
+
+                    lossChart.data.labels = [];
+                    lossChart.data.datasets[0].data = [];
+                    lossChart.update();
+                    elements.historyTableBody.innerHTML = '';
+
+                    addLog(`训练已启动～ 正在进行${taskType === 'physics_adv' ? '物理对抗训练' : taskType === 'role_adv' ? '角色对抗训练' : taskType === 'physics_self' ? '物理自训练' : taskType === 'role_self' ? '角色自训练' : '合并微调'}！`, 'success');
+                    addLog(`训练配置: 轮次=${config.num_train_epochs}, 批次=${config.per_device_train_batch_size}, 学习率=${config.learning_rate}`, 'info');
+                    updateTrainingStatus();
+                    setTimeout(pollTrainingStatus, 3000);
+                } else {
+                    throw new Error(data.message || "训练启动失败（后端返回错误）");
+                }
+            })
+            .catch(error => {
+                addLog(`训练启动失败：${error.message}`, 'error');
+            });
+        }
+
+        function pauseTraining() {
+            fetch('http://localhost:5000/api/pause-training', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    state.isPaused = true;
+                    addLog('训练已暂停～ 休息一下再继续吧！', 'warning');
+                    updateTrainingStatus();
+                } else {
+                    addLog(`暂停失败：${data.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                addLog(`暂停接口调用失败：${error.message}`, 'error');
+            });
+        }
+
+        function stopTraining() {
+            fetch('http://localhost:5000/api/stop-training', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    state.isTraining = false;
+                    state.isPaused = false;
+                    addLog('训练已终止～ 今天也辛苦啦！', 'info');
+                    updateTrainingStatus();
+                } else {
+                    addLog(`终止失败：${data.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                addLog(`终止接口调用失败：${error.message}`, 'error');
+            });
+        }
+
+        function saveModel() {
+            const saveConfig = {
+                epoch: state.currentEpoch,
+                save_path: document.getElementById('settingSavePath').value || "./model/physics_adversarial_lora"
+            };
+            fetch('http://localhost:5000/api/save-model', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(saveConfig)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    addLog(`模型已保存（轮次 ${state.currentEpoch}）～ 进度不会丢失哦！`, 'success');
+                } else {
+                    addLog(`模型保存失败：${data.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                addLog(`保存接口调用失败：${error.message}`, 'error');
+            });
+        }
+
+        function pollTrainingStatus() {
+            if (!state.isTraining) return;
+
+            fetch('http://localhost:5000/api/training-status')
+                .then(response => {
+                    if (!response.ok) throw new Error(`状态获取失败: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success && data.data) {
+                        const status = data.data;
+                        state.currentEpoch = status.epoch;
+                        state.trainingTime = status.elapsed_time || "00:00:00";
+                        state.totalEpochs = status.total_epochs || state.totalEpochs;
+
+                        updateLoss(status.current_loss, status.best_loss);
+                        updateMetrics(
+                            status.metrics.physics_accuracy,
+                            status.metrics.role_accuracy,
+                            status.metrics.stability,
+                            status.metrics.data_usage
+                        );
+                        updateChart(state.currentEpoch, status.current_loss);
+                        updateTrainingStatus();
+
+                        if (status.epoch_history && status.epoch_history.length > 0) {
+                            status.epoch_history.forEach(epochData => {
+                                addHistoryEntry(
+                                    epochData.epoch,
+                                    epochData.loss,
+                                    epochData.physics_accuracy,
+                                    epochData.role_accuracy,
+                                    epochData.time,
+                                    status.status
+                                );
+                            });
+                        }
+
+                        if (["completed", "stopped", "failed"].includes(status.status)) {
+                            const msg = status.status === "completed" ? "所有训练轮次已完成！太棒啦～ ✨" :
+                                       status.status === "stopped" ? "训练已被手动终止～" :
+                                       "训练异常失败，请查看日志！";
+                            addLog(msg, status.status === "completed" ? "success" : "error");
+                            state.isTraining = false;
+                            updateTrainingStatus();
+                            return;
+                        }
+
+                        setTimeout(pollTrainingStatus, 3000);
+                    } else {
+                        throw new Error(data.message || "训练状态数据为空");
+                    }
+                })
+                .catch(error => {
+                    addLog(`状态更新失败：${error.message}，3秒后重试...`, 'error');
+                    setTimeout(pollTrainingStatus, 3000);
+                });
+        }
+
+        function showSettings() {
+            elements.settingsModal.classList.remove('hidden');
+            setTimeout(() => {
+                elements.modalContent.classList.remove('scale-95', 'opacity-0');
+                elements.modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function hideSettings() {
+            elements.modalContent.classList.remove('scale-100', 'opacity-100');
+            elements.modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => elements.settingsModal.classList.add('hidden'), 300);
+        }
+
+        function saveSettings() {
+            const num_train_epochs = parseInt(document.getElementById('settingEpochs').value) || 10;
+            const per_device_train_batch_size = parseInt(document.getElementById('settingBatchSize').value) || 2;
+            const learning_rate = document.getElementById('settingLearningRate').value || "1e-4";
+            const train_mode = document.getElementById('settingTrainMode').value || "adversarial";
+
+            state.totalEpochs = num_train_epochs;
+            document.getElementById('totalEpochs').textContent = num_train_epochs;
+            document.getElementById('batchSize').textContent = per_device_train_batch_size;
+            document.getElementById('learningRate').textContent = learning_rate;
+            document.getElementById('trainMode').textContent =
+                train_mode === 'adversarial' ? '对抗式训练' :
+                train_mode === 'self' ? '自训练' : '精细微调';
+
+            addLog(`训练设置已更新: 轮次=${num_train_epochs}, 批次=${per_device_train_batch_size}, 学习率=${learning_rate}`, 'success');
+            hideSettings();
+        }
+
+        function bindEvents() {
+            elements.startBtn.addEventListener('click', startTraining);
+            elements.pauseBtn.addEventListener('click', pauseTraining);
+            elements.stopBtn.addEventListener('click', stopTraining);
+            elements.saveBtn.addEventListener('click', saveModel);
+            elements.clearLogs.addEventListener('click', clearLogs);
+            elements.settingsBtn.addEventListener('click', showSettings);
+            elements.closeSettings.addEventListener('click', hideSettings);
+            elements.cancelSettings.addEventListener('click', hideSettings);
+            elements.saveSettings.addEventListener('click', saveSettings);
+            elements.settingTaskType.addEventListener('change', fillDefaultParamsByTask);
+
+            elements.settingsModal.addEventListener('click', (e) => {
+                if (e.target === elements.settingsModal) hideSettings();
+            });
+        }
+
+        function init() {
+            initChart();
+            bindEvents();
+            fillDefaultParamsByTask();
+            updateTrainingStatus();
+            updateMetrics(0, 0, 0, 0);
+            updateLoss(0, 0);
+            fetchHardwareInfo();
+        }
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

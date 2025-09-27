@@ -1,11 +1,20 @@
 {
-    "epochs": 10,
-    "batch_size": 16,
-    "learning_rate": "2e-5",
-    "train_mode": "adversarial",
+  "batch_size": 8,
+  "learning_rate": "5e-5",
+  "epochs": 2,
+  "save_interval": 1,
+  "shuffle_data": true,
+  "augment_data": true,
+  "physics": {
+    "data_path": "data/processed/physics_train.json",
+    "save_path": "model/physics_self_lora",
+    "generate_num_samples": 500,
+    "filter_logic_threshold": 0.7
+  },
+  "role": {
     "data_path": "data/processed/elysia_train.json",
-    "save_path": "model/elysia_lora",
-    "save_interval": 2,
-    "shuffle_data": true,
-    "augment_data": false
+    "save_path": "model/role_self_lora",
+    "generate_num_samples": 300,
+    "filter_style_threshold": 0.6
+  }
 }
