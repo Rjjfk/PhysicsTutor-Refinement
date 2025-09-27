@@ -1,0 +1,11 @@
+{
+    "epochs": 10,
+    "batch_size": 16,
+    "learning_rate": "2e-5",
+    "train_mode": "adversarial",
+    "data_path": "data/processed/elysia_train.json",
+    "save_path": "model/elysia_lora",
+    "save_interval": 2,
+    "shuffle_data": true,
+    "augment_data": false
+}

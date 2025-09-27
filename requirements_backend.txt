@@ -1,0 +1,4 @@
+flask==2.3.3
+flask-cors==4.0.0
+flask-socketio==5.3.6  # 用于实时推送日志（可选）
+python-socketio==5.8.0

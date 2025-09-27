@@ -1,4 +1,3 @@
-# code/infer/role_adapter.py
 import random
 import re
 from typing import Dict, List, Optional, Tuple
